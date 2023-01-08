@@ -7,6 +7,9 @@ use serde_json;
 
 use std::{fs, str::FromStr};
 use std::io::{BufWriter};
+use std::char;
+
+static FILE: &'static str = "dzejson.json";
 
 enum InputError {
     EmptyFieldsError(serde_json::Value),
@@ -44,9 +47,7 @@ fn define_error(user: &User) -> Result<(), InputError> {
         return Err(InputError::EmptyFieldsError(serde_json::json!({"e": "Cannot pass empty username nor password."})));
     }
 
-    let special_characters: [char; 12] = ['?', ';', '#', '$', '%', '&', '*', '+', '-', '/', ':', '@'];
-
-    if user.username.contains(special_characters) {
+    if !user.username.chars().all(char::is_alphanumeric) {
         return Err(InputError::InvalidCharacterError(serde_json::json!({"e": "Special characters used in username."})));
     }
 
@@ -64,12 +65,10 @@ fn define_error(user: &User) -> Result<(), InputError> {
 
 
 fn add_user_to_file(users: Vec<User>) -> std::io::Result<()> {
-    let file_path = "dzejson.json".to_string();
-
     let file = fs::File::options()
         .write(true)
         .truncate(true)
-        .open(file_path)?;
+        .open(FILE)?;
 
     let writer = BufWriter::new(file);
 
@@ -80,9 +79,7 @@ fn add_user_to_file(users: Vec<User>) -> std::io::Result<()> {
 }
 
 fn create_vector_out_of_json_file() -> Vec<User> {
-    let file_path = "dzejson.json".to_string();
-
-    let content = fs::read_to_string(&file_path).unwrap();
+    let content = fs::read_to_string(FILE).unwrap();
 
     let content_to_value = serde_json::Value::from_str(&content).unwrap();
 
@@ -104,9 +101,7 @@ fn create_vector_out_of_json_file() -> Vec<User> {
 fn check_if_username_exists(username: String) -> bool {
     let mut taken = false;
 
-    let file_path = "dzejson.json".to_string();
-
-    let user_info_str = fs::read_to_string(&file_path).unwrap();
+    let user_info_str = fs::read_to_string(FILE).unwrap();
 
     let user_info_json = serde_json::Value::from_str(&user_info_str).unwrap();
 
@@ -124,8 +119,7 @@ fn check_if_username_exists(username: String) -> bool {
 
 #[get("/users")]
 async fn get_user_info() -> impl Responder {
-    let file_path = "dzejson.json".to_string();
-    let user_info = fs::read_to_string(&file_path).unwrap();
+    let user_info = fs::read_to_string(FILE).unwrap();
 
     HttpResponse::Ok()
         .content_type(ContentType::json())
