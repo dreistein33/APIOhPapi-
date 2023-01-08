@@ -1,13 +1,12 @@
-use actix_web::{get, post, put, delete, HttpResponse, HttpServer, Responder, App, web, ResponseError};
+use actix_web::{get, HttpResponse, HttpServer, Responder, App, web, post};
 use actix_web::http::header::ContentType;
 
 use serde::{Serialize, Deserialize};
 
 use serde_json;
 
-use std::{fs, io::Read, str::FromStr};
-use std::io::{BufWriter, Seek};
-use std::cell::RefCell;
+use std::{fs, str::FromStr};
+use std::io::{BufWriter};
 
 enum InputError {
     EmptyFieldsError(serde_json::Value),
@@ -70,7 +69,7 @@ fn add_user_to_file(users: Vec<User>) -> std::io::Result<()> {
     let file = fs::File::options()
         .write(true)
         .truncate(true)
-        .open(&file_path)?;
+        .open(file_path)?;
 
     let writer = BufWriter::new(file);
 
